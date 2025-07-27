@@ -10,10 +10,16 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
+
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        maven("https://maven.aliyun.com/repository/public")
+        maven("https://maven.aliyun.com/repository/central")
         google()
-        mavenCentral()
+        //mavenCentral()
         gradlePluginPortal()
     }
+    // 允许项目级仓库与 settings 并存
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
 }
 
 plugins {

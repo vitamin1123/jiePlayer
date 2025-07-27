@@ -1,7 +1,10 @@
 allprojects {
     repositories {
-        google()
-        mavenCentral()
+        //google() // 这行注释
+        //avenCentral() //这行也注释，底下三行加上去
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        maven("https://maven.aliyun.com/repository/public")
+        maven("https://maven.aliyun.com/repository/central")
     }
 }
 
