@@ -10,16 +10,27 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
-
+        // 阿里云镜像（只影响 Gradle 插件本身）
         maven("https://maven.aliyun.com/repository/gradle-plugin")
         maven("https://maven.aliyun.com/repository/public")
         maven("https://maven.aliyun.com/repository/central")
         google()
-        //mavenCentral()
         gradlePluginPortal()
     }
-    // 允许项目级仓库与 settings 并存
+}
+
+dependencyResolutionManagement {
+    // 让 settings 中的仓库配置优先生效
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
+    repositories {
+        google()
+        mavenCentral()
+        // 必须添加的 Flutter 官方 Maven 仓库
+        maven {
+            url = uri("https://mirrors.tuna.tsinghua.edu.cn/flutter/download.flutter.io")
+        }
+    }
 }
 
 plugins {
