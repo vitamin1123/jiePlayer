@@ -19,6 +19,14 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
   bool _isPlayerVisible = false;
   
   @override
+  void initState() {
+    super.initState();
+    if (widget.movie.playList.isNotEmpty) {
+      _playVideo(0); // 自动播放第一集
+    }
+  }
+  
+  @override
   void dispose() {
     _chewieController?.dispose();
     _videoPlayerController?.dispose();
@@ -90,7 +98,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
   @override
   Widget build(BuildContext context) {
     final playList = widget.movie.playList;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -109,12 +117,27 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 主内容卡片
-            Container(
+      body: CustomScrollView(
+        slivers: [
+          // 播放器吸顶且占满宽度
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _PlayerHeaderDelegate(
+              child: _isPlayerVisible && _chewieController != null
+                  ? Container(
+                      color: Colors.black,
+                      width: MediaQuery.of(context).size.width,
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: Chewie(controller: _chewieController!),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          // 简介卡片
+          SliverToBoxAdapter(
+            child: Container(
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -136,7 +159,6 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 左侧封面图
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(
@@ -159,7 +181,6 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        // 右侧信息
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,63 +269,12 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                 ],
               ),
             ),
-            
-            // 播放器区域
-            if (_isPlayerVisible && _chewieController != null)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          const Text(
-                            '正在播放',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Color(0xFF8E8E93)),
-                            onPressed: _hidePlayer,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: Chewie(controller: _chewieController!),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            
-            // 播放列表
-            if (playList.isNotEmpty)
-              Container(
-                margin: EdgeInsets.fromLTRB(16, _isPlayerVisible ? 16 : 0, 16, 16),
+          ),
+          // 播放列表卡片
+          if (playList.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -378,8 +348,8 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                   ],
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -410,5 +380,26 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
         ],
       ),
     );
+  }
+}
+
+// SliverPersistentHeaderDelegate for player
+class _PlayerHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _PlayerHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent =>  MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width * 9 / 16;
+  @override
+  double get maxExtent =>  MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width * 9 / 16;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _PlayerHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }

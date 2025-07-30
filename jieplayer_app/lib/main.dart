@@ -4,9 +4,17 @@ import 'package:flutter/services.dart';
 import 'pages/movies_page.dart';
 
 void main() {
+  // 保证竖屏
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
   runApp(const JiePlayerApp());
 }
 
+/* =========================
+ * 整个应用的根
+ * ========================= */
 class JiePlayerApp extends StatelessWidget {
   const JiePlayerApp({super.key});
 
@@ -14,140 +22,74 @@ class JiePlayerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'JiePlayer',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF1A1A1A),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         fontFamily: 'PingFang SC',
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-          titleLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-          titleMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1A1A),
-          ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF333333),
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF666666),
-          ),
-          bodySmall: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF999999),
-          ),
-        ),
+        useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF007AFF),
           brightness: Brightness.light,
         ),
-        useMaterial3: true,
       ),
-      home: const MainPage(),
-      debugShowCheckedModeBanner: false,
+      home: const AppRoot(), // 统一入口
     );
   }
 }
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+/* =========================
+ * 带 BottomNavigationBar 的壳子
+ * ========================= */
+class AppRoot extends StatefulWidget {
+  const AppRoot({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  State<AppRoot> createState() => _AppRootState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _AppRootState extends State<AppRoot> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const MoviesPage(),
-    const Center(child: Text('收藏', style: TextStyle(fontSize: 24, color: Color(0xFF1A1A1A)))),
-    const Center(child: Text('我的', style: TextStyle(fontSize: 24, color: Color(0xFF1A1A1A)))),
+  final List<Widget> _pages = const [
+    HomePage(),   // 首页
+    MoviesPage(), // 影片页
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            currentIndex: _currentIndex,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: const Color(0xFF007AFF),
-            unselectedItemColor: const Color(0xFF8E8E93),
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: '首页',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.movie_outlined),
-                activeIcon: Icon(Icons.movie),
-                label: '影片',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_outline),
-                activeIcon: Icon(Icons.favorite),
-                label: '会员',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search_outlined),
-                activeIcon: Icon(Icons.search),
-                label: '搜好剧',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: '我的',
-              ),
-            ],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: const Color(0xFF007AFF),
+        unselectedItemColor: const Color(0xFF8E8E93),
+        backgroundColor: Colors.white,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: '首页',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.movie_outlined),
+            activeIcon: Icon(Icons.movie),
+            label: '影片',
+          ),
+        ],
+        onTap: (index) => setState(() => _currentIndex = index),
       ),
     );
   }
 }
 
+/* =========================
+ * 真正的「首页」内容
+ * ========================= */
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -155,313 +97,377 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final TextEditingController _searchController = TextEditingController();
-  
-  final List<String> _categories = ['首页', '以法之名', '刷剧', '电影', '综艺', '动漫'];
-  
-  // 模拟视频数据
-  final List<VideoItem> _videos = [
-    VideoItem('以法之名', '突击手于段审讯网络金融', '限免 15-16集', const Color(0xFF4A90E2)),
-    VideoItem('异人之下', '高分爆款', '13集全', const Color(0xFF7B68EE)),
-    VideoItem('藏海传', '突袭引票', '40集全', const Color(0xFF32CD32)),
-    VideoItem('七根凶简', '终极对决', '32集全', const Color(0xFFFF6B6B)),
-    VideoItem('及时更新', '畅快阅读', '9.1', const Color(0xFFFFB347)),
-    VideoItem('热门推荐', '精彩内容', 'VIP', const Color(0xFF20B2AA)),
-    VideoItem('经典回顾', '怀旧时光', '完结', const Color(0xFFDDA0DD)),
-    VideoItem('新剧上线', '抢先观看', '更新中', const Color(0xFF98FB98)),
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  final List<String> _groups = [
+    '推荐', '电影', '电视剧', '综艺', '动漫', '纪录片', '短剧', 'VIP专区'
   ];
+  final List<String> _tabs = [
+    '热门', '最新', '高分', '经典', '冷门', '豆瓣榜', '热搜', '收藏'
+  ];
+  String _selectedGroup = '推荐';
+  int _selectedTab = 0;
+  bool _showGroupPopup = false;
+
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      setState(() => _selectedTab = _tabController.index);
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
+  }
+
+  List<String> get _mockList => List.generate(
+        20,
+        (i) => '${_tabs[_selectedTab]}内容 ${i + 1}',
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFF8F9FA),
+          body: SafeArea(
+            child: Column(
+              children: [
+                // 顶部分组
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () => setState(() => _showGroupPopup = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(0xFF007AFF),
+                              width: 1.5,
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                _selectedGroup,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: _showGroupPopup
+                                      ? const Color(0xFF007AFF)
+                                      : const Color(0xFF1A1A1A),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 22,
+                                color: _showGroupPopup
+                                    ? const Color(0xFF007AFF)
+                                    : const Color(0xFF8E8E93),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      IconButton(
+                        icon: const Icon(Icons.search,
+                            color: Color(0xFF8E8E93)),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
+                // 横向 Tab
+                SizedBox(
+                  height: 44,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(_tabs.length, (i) {
+                        final selected = _tabController.index == i;
+                        return GestureDetector(
+                          onTap: () => _tabController.animateTo(i),
+                          child: Container(
+                            margin:
+                                const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 22, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? const Color(0xFF007AFF).withOpacity(0.12)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: selected
+                                    ? const Color(0xFF007AFF)
+                                    : const Color(0xFFE5E5EA),
+                                width: 1.5,
+                              ),
+                              borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(22),
+                                right: Radius.circular(22),
+                              ),
+                            ),
+                            child: Text(
+                              _tabs[i],
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: selected
+                                    ? const Color(0xFF007AFF)
+                                    : const Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+                // 列表
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _tabs.map((tab) {
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        itemCount: _mockList.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (_, index) => _buildCard(_mockList[index]),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // 分组弹窗
+        if (_showGroupPopup)
+          _GroupPopup(
+            groups: _groups,
+            selected: _selectedGroup,
+            onClose: () => setState(() => _showGroupPopup = false),
+            onConfirm: (group) {
+              setState(() {
+                _selectedGroup = group;
+                _showGroupPopup = false;
+              });
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCard(String text) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListTile(
+          title: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF8E8E93)),
+          onTap: () {},
+        ),
+      );
+}
+
+/* =========================
+ * 影片页（空壳，可自行扩展）
+ * ========================= */
+// class MoviesPage extends StatelessWidget {
+//   const MoviesPage({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Center(child: Text('影片页内容'));
+//   }
+// }
+
+/* =========================
+ * 分组选择弹窗
+ * ========================= */
+class _GroupPopup extends StatefulWidget {
+  final List<String> groups;
+  final String selected;
+  final VoidCallback onClose;
+  final ValueChanged<String> onConfirm;
+
+  const _GroupPopup({
+    required this.groups,
+    required this.selected,
+    required this.onClose,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_GroupPopup> createState() => _GroupPopupState();
+}
+
+class _GroupPopupState extends State<_GroupPopup> {
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.selected;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 顶部导航栏
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+    final height = MediaQuery.of(context).size.height * 0.6;
+    return Material(
+      color: Colors.black.withOpacity(0.25),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: height,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B35),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      '高分必看',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  const Text(
-                    '异人之下',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
+                    child: Row(
+                      children: [
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: widget.onClose,
+                          child: const Icon(Icons.close,
+                              size: 26, color: Color(0xFF8E8E93)),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.search,
-                      size: 20,
-                      color: Color(0xFF8E8E93),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 8),
+                      itemCount: widget.groups.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        final group = widget.groups[index];
+                        final selected = group == _selected;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selected = group),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? const Color(0xFF007AFF).withOpacity(0.08)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: selected
+                                  ? Border.all(
+                                      color: const Color(0xFF007AFF),
+                                      width: 1.5)
+                                  : Border.all(color: Colors.transparent),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  group,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: selected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: selected
+                                        ? const Color(0xFF007AFF)
+                                        : const Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (selected)
+                                  const Icon(Icons.check_circle,
+                                      color: Color(0xFF007AFF), size: 20),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE5E5EA)),
-                    ),
-                    child: const Text(
-                      '退',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF8E8E93),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF007AFF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () => widget.onConfirm(_selected),
+                        child: const Text(
+                          '确认分组',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            // 横向滚动的Tab
-            Container(
-              height: 44,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                indicatorColor: const Color(0xFF007AFF),
-                indicatorWeight: 2,
-                indicatorSize: TabBarIndicatorSize.label,
-                labelColor: const Color(0xFF007AFF),
-                unselectedLabelColor: const Color(0xFF8E8E93),
-                labelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-                tabs: _categories.map((category) => Tab(text: category)).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // 视频卡片流式布局
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: _categories.map((category) => _buildVideoGrid()).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVideoGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: MasonryGridView.count(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        itemCount: _videos.length,
-        itemBuilder: (context, index) {
-          return VideoCard(video: _videos[index], index: index);
-        },
-      ),
-    );
-  }
-}
-
-class VideoItem {
-  final String title;
-  final String description;
-  final String badge;
-  final Color gradientColor;
-
-  VideoItem(this.title, this.description, this.badge, this.gradientColor);
-}
-
-class VideoCard extends StatelessWidget {
-  final VideoItem video;
-  final int index;
-
-  const VideoCard({super.key, required this.video, required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    final cardHeight = 180.0 + (index % 3) * 30; // 创建瀑布流效果
-    
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: cardHeight,
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 视频缩略图
-              Expanded(
-                flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        video.gradientColor.withOpacity(0.8),
-                        video.gradientColor,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // 背景图案
-                      Positioned(
-                        right: -20,
-                        top: -20,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                      // 播放按钮
-                      const Center(
-                        child: Icon(
-                          Icons.play_circle_fill,
-                          size: 40,
-                          color: Colors.white,
-                        ),
-                      ),
-                      // 标签
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getBadgeColor(),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            video.badge,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // 视频信息
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        video.title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A1A),
-                          height: 1.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        video.description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF8E8E93),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
-  }
-
-  Color _getBadgeColor() {
-    if (video.badge.contains('限免')) return const Color(0xFF34C759);
-    if (video.badge.contains('VIP')) return const Color(0xFFFF9500);
-    if (video.badge.contains('集全')) return const Color(0xFF007AFF);
-    return const Color(0xFF8E8E93);
   }
 }

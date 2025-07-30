@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../models/movie_model.dart';
@@ -180,113 +182,109 @@ class _MoviesPageState extends State<MoviesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          '影片库',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(120),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // 分类选择
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E5EA)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedCategoryId,
-                      hint: const Text('选择分类'),
-                      isExpanded: true,
-                      items: _categories.map((category) {
-                        return DropdownMenuItem<String>(
-                          value: category.typeId,
-                          child: Text(category.typeName),
-                        );
-                      }).toList(),
-                      onChanged: _onCategoryChanged,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // 搜索框
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '输入关键词搜索',
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF8E8E93)),
-                    filled: true,
-                    fillColor: const Color(0xFFF8F9FA),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF007AFF)),
-                    ),
-                  ),
-                  onSubmitted: _onSearchSubmitted,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: _isLoading && _movies.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF007AFF),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: () => _loadMovies(isRefresh: true),
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.all(16),
-                    sliver: SliverMasonryGrid.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childCount: _movies.length,
-                      itemBuilder: (context, index) {
-                        return _buildMovieCard(_movies[index], index);
-                      },
-                    ),
-                  ),
-                  if (_isLoadingMore)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF007AFF),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: false,
+            elevation: 0,
+            backgroundColor: Colors.white.withOpacity(0.85),
+            expandedHeight: 80,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 90,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedCategoryId,
+                            hint: const Text('选择分类', style: TextStyle(fontSize: 15)),
+                            isExpanded: true,
+                            style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
+                            items: _categories.map((category) {
+                              return DropdownMenuItem<String>(
+                                value: category.typeId,
+                                child: Center(
+                                  child: Text(
+                                    category.typeName,
+                                    style: const TextStyle(fontSize: 15),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: _onCategoryChanged,
                           ),
                         ),
                       ),
-                    ),
-                ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
+                          decoration: InputDecoration(
+                            hintText: '输入关键词搜索',
+                            hintStyle: const TextStyle(fontSize: 15, color: Color(0xFF8E8E93)),
+                            prefixIcon: const Icon(Icons.search, color: Color(0xFF8E8E93)),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.7),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onSubmitted: _onSearchSubmitted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverMasonryGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childCount: _movies.length,
+              itemBuilder: (context, index) {
+                return _buildMovieCard(_movies[index], index);
+              },
+            ),
+          ),
+          if (_isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF007AFF),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
   
@@ -297,7 +295,7 @@ class _MoviesPageState extends State<MoviesPage> {
       onTap: () => _navigateToDetail(movie),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(4), // 原来是8
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),
@@ -307,7 +305,7 @@ class _MoviesPageState extends State<MoviesPage> {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(4), // 原来是8
           child: Container(
             height: cardHeight,
             color: Colors.white,
@@ -386,7 +384,7 @@ class _MoviesPageState extends State<MoviesPage> {
                               ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF34C759),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(4), // 评分标签建议保持4
                               ),
                               child: Text(
                                 movie.vodScore,
