@@ -289,7 +289,7 @@ class _MoviesPageState extends State<MoviesPage> {
   }
   
   Widget _buildMovieCard(Movie movie, int index) {
-    final cardHeight = 200.0 + (index % 3) * 30; // 创建瀑布流效果
+    final cardHeight = 280.0 + (index % 3) * 30; // 创建瀑布流效果
     
     return GestureDetector(
       onTap: () => _navigateToDetail(movie),
@@ -314,7 +314,7 @@ class _MoviesPageState extends State<MoviesPage> {
               children: [
                 // 影片封面
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -425,7 +425,7 @@ class _MoviesPageState extends State<MoviesPage> {
                               ? movie.vodContent
                               : movie.vodRemarks,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Color(0xFF8E8E93),
                             height: 1.3,
                           ),
