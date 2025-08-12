@@ -9,25 +9,21 @@ class PlayerCache {
   Duration _lastPosition = Duration.zero;
   String? _lastUrl;
 
-  Future<VideoPlayerController> get(
-    String url,
-    Duration startAt,
-  ) async {
-    // 如果已经持有同一地址，直接复用
+  Future<VideoPlayerController> get(String url, Duration startAt) async {
     if (_controller != null && _lastUrl == url) {
       await _controller!.seekTo(startAt);
       return _controller!;
     }
-
-    // 先释放旧的
     await release();
-
     _controller = VideoPlayerController.networkUrl(Uri.parse(url));
     await _controller!.initialize();
     await _controller!.seekTo(startAt);
     _lastUrl = url;
     return _controller!;
   }
+
+  Duration getSavedPosition(String url) =>
+      _lastUrl == url ? _lastPosition : Duration.zero;
 
   Future<void> release() async {
     if (_controller != null) {
@@ -38,7 +34,4 @@ class PlayerCache {
       _lastUrl = null;
     }
   }
-
-  Duration getSavedPosition(String url) =>
-      _lastUrl == url ? _lastPosition : Duration.zero;
 }
